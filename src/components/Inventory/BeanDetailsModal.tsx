@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Package, Calendar, DollarSign, TrendingUp, AlertTriangle, User } from 'lucide-react';
+import { X, Package, Calendar, DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { GreenBean } from '../../types';
 import { useAppContext } from '../../context/AppContext';
 
@@ -8,7 +8,7 @@ interface BeanDetailsModalProps {
   onClose: () => void;
 }
 
-export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProps) {
+const BeanDetailsModal: React.FC<BeanDetailsModalProps> = ({ bean, onClose }) => {
   const { state } = useAppContext();
   const { roastingSessions, sales } = state;
 
@@ -16,7 +16,7 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
   const beanUsage = roastingSessions.filter(session => session.greenBeanId === bean.id);
   const totalUsed = beanUsage.reduce((sum, session) => sum + session.greenBeanQuantity, 0);
   const totalProduced = beanUsage.reduce((sum, session) => sum + session.roastedQuantity, 0);
-  const averageYield = beanUsage.length > 0 ? (totalProduced / totalUsed) * 100 : 0;
+  const averageYield = totalUsed > 0 ? (totalProduced / totalUsed) * 100 : 0;
 
   // Calculate sales from this bean
   const directSales = sales.filter(sale => sale.productId === bean.id && sale.productType === 'green');
@@ -31,7 +31,7 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
   // Days since entry
   const daysSinceEntry = Math.floor((new Date().getTime() - bean.entryDate.getTime()) / (1000 * 3600 * 24));
 
-  // Status determination
+  // Determine stock status
   const getStockStatus = () => {
     if (bean.quantity <= bean.lowStockThreshold) {
       return { status: 'Kritis', color: 'text-red-600', bg: 'bg-red-100' };
@@ -47,6 +47,7 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
             <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center">
@@ -94,6 +95,7 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
               </div>
             </div>
 
+            {/* Financial Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                 <DollarSign className="h-5 w-5 mr-2" />
@@ -190,7 +192,7 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {beanUsage.slice(-5).map((session) => {
-                        const yield = (session.roastedQuantity / session.greenBeanQuantity) * 100;
+                        const yieldPercentage = (session.roastedQuantity / session.greenBeanQuantity) * 100;
                         return (
                           <tr key={session.id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 text-sm text-gray-900">
@@ -206,8 +208,8 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
                               {session.roastedQuantity} kg
                             </td>
                             <td className="px-4 py-3 text-sm">
-                              <span className={`font-medium ${yield >= 80 ? 'text-green-600' : yield >= 75 ? 'text-yellow-600' : 'text-red-600'}`}>
-                                {yield.toFixed(1)}%
+                              <span className={`font-medium ${yieldPercentage >= 80 ? 'text-green-600' : yieldPercentage >= 75 ? 'text-yellow-600' : 'text-red-600'}`}>
+                                {yieldPercentage.toFixed(1)}%
                               </span>
                             </td>
                           </tr>
@@ -326,8 +328,8 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
                 <div className="flex justify-between">
                   <span className="text-amber-700">ROI dari Penjualan:</span>
                   <span className="font-medium">
-                    {totalSalesRevenue > 0 ? 
-                      `${(((totalSalesRevenue - (totalSalesQuantity * bean.purchasePricePerKg)) / (totalSalesQuantity * bean.purchasePricePerKg)) * 100).toFixed(1)}%` 
+                    {totalSalesQuantity > 0 && bean.purchasePricePerKg > 0
+                      ? `${(((totalSalesRevenue - (totalSalesQuantity * bean.purchasePricePerKg)) / (totalSalesQuantity * bean.purchasePricePerKg)) * 100).toFixed(1)}%`
                       : 'N/A'
                     }
                   </span>
@@ -336,6 +338,7 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
             </div>
           </div>
 
+          {/* Close Button */}
           <div className="flex justify-end pt-4 border-t border-gray-200">
             <button
               onClick={onClose}
@@ -348,4 +351,6 @@ export default function BeanDetailsModal({ bean, onClose }: BeanDetailsModalProp
       </div>
     </div>
   );
-}
+};
+
+export default BeanDetailsModal;
